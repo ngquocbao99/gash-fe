@@ -65,35 +65,31 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
 
         const feedbackMap = {};
 
-        // Extract feedbacks from orderDetails
         order.orderDetails.forEach((detail, index) => {
-            // Use index as key when variant is null, or variant._id when available
             const key = detail.variant?._id || `item_${index}`;
 
-            if (detail.feedback) {
-                // Check if feedback has rating or content (using flags from backend)
-                const hasRating = detail.feedback.has_rating === true &&
-                    detail.feedback.rating !== null &&
-                    detail.feedback.rating !== undefined;
-
-                const hasContent = detail.feedback.has_content === true &&
-                    detail.feedback.content &&
-                    detail.feedback.content.trim() !== '' &&
-                    detail.feedback.content !== 'This feedback has been deleted by staff/admin';
-
-                // Include feedback if it has rating OR content and is not deleted
-                if ((hasContent || hasRating) && !detail.feedback.is_deleted) {
-                    feedbackMap[key] = {
-                        rating: detail.feedback.rating,
-                        content: detail.feedback.content,
-                        has_rating: hasRating,
-                        has_content: hasContent,
-                        is_deleted: false,
-                        created_at: detail.feedback.created_at,
-                        updated_at: detail.feedback.updated_at
-                    };
-                }
+            if (!detail.feedback) {
+                return; // No feedback object at all
             }
+
+            const isDeleted = detail.feedback.is_deleted === true;
+
+            // Always include if there's any feedback record (even deleted)
+            // We want to block re-submission and show deletion message
+            const hasOriginalRating = detail.feedback.rating !== null && detail.feedback.rating !== undefined && detail.feedback.rating >= 1 && detail.feedback.rating <= 5;
+            const hasOriginalContent = detail.feedback.content && detail.feedback.content.trim() !== '' && detail.feedback.content !== 'This feedback has been deleted by staff/admin';
+
+            feedbackMap[key] = {
+                rating: isDeleted ? null : detail.feedback.rating,
+                content: isDeleted 
+                    ? 'This feedback has been deleted by staff/admin'
+                    : detail.feedback.content || '',
+                has_rating: !isDeleted && hasOriginalRating,
+                has_content: !isDeleted ? hasOriginalContent : true, // deleted feedback "has content" (the message)
+                is_deleted: isDeleted,
+                created_at: detail.feedback.created_at,
+                updated_at: detail.feedback.updated_at
+            };
         });
 
         setExistingFeedbacks(feedbackMap);
@@ -752,7 +748,7 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
                                 {order.summary && (
                                     <div className="flex justify-between text-sm text-gray-600">
                                         <span className="font-medium">Items:</span>
-                                        <span>{order.summary.totalItems} item(s) • {order.summary.totalQuantity} qty</span>
+                                        <span>{order.summary.totalItems} item(s) - {order.summary.totalQuantity} quantity</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-gray-700">
@@ -775,7 +771,7 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
 
                         {/* Products */}
                         <div className="space-y-3">
-                            <h4 className="text-xl sm:text-2xl font-normal text-gray-900 mb-4">Order Items</h4>
+                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h4>
                             {order.orderDetails && order.orderDetails.length > 0 ? (
                                 order.orderDetails.map((d, index) => {
                                     const feedbackKey = d.variant?._id || `item_${index}`;
@@ -813,29 +809,29 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
                                                     </div>
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <p className="text-sm text-gray-600 m-0">
-                                                            Color: {d.variant?.color?.name || "N/A"}  •  Size: {d.variant?.size?.name || "N/A"}
+                                                            Color: {d.variant?.color?.name || "N/A"}  -  Size: {d.variant?.size?.name || "N/A"}
                                                         </p>
                                                     </div>
                                                     <p className="text-sm text-gray-600 m-0">Unit Price: {formatPrice(d.unitPrice)}</p>
-                                                    {(isOutOfStock || isDiscontinued) && (
+                                                    {/* {(isOutOfStock || isDiscontinued) && (
                                                         <p className="text-sm font-semibold text-red-600">
                                                             {isDiscontinued ? "Discontinued" : "Out of Stock"}
                                                         </p>
-                                                    )}
+                                                    )} */}
                                                     <p className="text-base font-semibold text-red-600 m-0 mt-1">Total: {formatPrice(d.totalPrice)}</p>
                                                 </div>
                                             </div>
                                             {/* Quantity and Feedback Buttons */}
-                                            <div className="flex flex-row sm:flex-col items-center sm:items-center sm:justify-center gap-3 sm:gap-4">
+                                            <div className="flex flex-col sm:flex-row items-center sm:items-center sm:justify-center gap-3 sm:gap-4">
                                                 <div className="flex items-center justify-center">
                                                     <div className="px-4 py-2 bg-gray-100 rounded-lg text-center min-w-20">
-                                                        <span className="text-sm text-gray-600">Qty</span>
+                                                        <span className="text-sm text-gray-600">Quantity</span>
                                                         <p className="text-lg font-semibold text-gray-900">{d.quantity}</p>
                                                     </div>
                                                 </div>
                                                 {/* Feedback Buttons – Only if Delivered */}
                                                 {order.order_status?.toLowerCase() === "delivered" && (
-                                                    <div className="flex gap-2">
+                                                    <div className="flex flex-col gap-2">
                                                         <ProductButton
                                                             variant="secondary"
                                                             size="sm"
@@ -993,6 +989,7 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
                     isDeleting={loadingStates.deleting?.[selectedVariantId] || false}
                     showDeleteButton={!!existingFeedbacks[selectedVariantId]}
                     productName={selectedProductName}
+                    existingFeedback={existingFeedbacks[selectedVariantId]}
                 />
             )}
 
