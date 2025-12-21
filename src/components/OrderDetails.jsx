@@ -56,9 +56,12 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
         }
     }, [orderId, showToast]);
 
-    // 🔍 Extract feedbacks from order data
+    // 🔍 Extract feedbacks from order data (READ-ONLY operation - only affects display)
     const extractFeedbacksFromOrder = useCallback(() => {
-        if (!order?.orderDetails?.length) return;
+        if (!order?.orderDetails?.length) {
+            setExistingFeedbacks({});
+            return;
+        }
 
         const feedbackMap = {};
 
@@ -68,13 +71,27 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
             const key = detail.variant?._id || `item_${index}`;
 
             if (detail.feedback) {
-                // Only include feedback if it has content or rating and is not deleted
-                // Check the has_* flags to determine if feedback exists
-                const hasContent = detail.feedback.content && detail.feedback.content.trim() !== '';
-                const hasRating = detail.feedback.rating > 0; // rating is integer 1-5
+                // Check if feedback has rating or content (using flags from backend)
+                const hasRating = detail.feedback.has_rating === true &&
+                    detail.feedback.rating !== null &&
+                    detail.feedback.rating !== undefined;
 
+                const hasContent = detail.feedback.has_content === true &&
+                    detail.feedback.content &&
+                    detail.feedback.content.trim() !== '' &&
+                    detail.feedback.content !== 'This feedback has been deleted by staff/admin';
+
+                // Include feedback if it has rating OR content and is not deleted
                 if ((hasContent || hasRating) && !detail.feedback.is_deleted) {
-                    feedbackMap[key] = detail.feedback;
+                    feedbackMap[key] = {
+                        rating: detail.feedback.rating,
+                        content: detail.feedback.content,
+                        has_rating: hasRating,
+                        has_content: hasContent,
+                        is_deleted: false,
+                        created_at: detail.feedback.created_at,
+                        updated_at: detail.feedback.updated_at
+                    };
                 }
             }
         });
@@ -85,6 +102,13 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
     useEffect(() => {
         if (orderId) fetchOrderDetails();
     }, [orderId, fetchOrderDetails]);
+
+    // Extract feedbacks when order data is loaded or updated
+    useEffect(() => {
+        if (order?.orderDetails) {
+            extractFeedbacksFromOrder();
+        }
+    }, [order?.orderDetails, extractFeedbacksFromOrder]);
 
     useEffect(() => {
         if (order?.payment_method === 'VNPAY' && order?.pay_status === 'unpaid' && order?.vnpay_expiry_time) {
@@ -127,65 +151,65 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
 
         // Initialize socket if not already created
         if (!socketRef.current) {
-          const token = localStorage.getItem("token");
-          socketRef.current = io(SOCKET_URL, {
-            transports: ["websocket", "polling"],
-            auth: { token },
-            withCredentials: true,
-          });
+            const token = localStorage.getItem("token");
+            socketRef.current = io(SOCKET_URL, {
+                transports: ["websocket", "polling"],
+                auth: { token },
+                withCredentials: true,
+            });
         }
 
         const socket = socketRef.current;
 
         // Connect and authenticate
         socket.on("connect", () => {
-          console.log("OrderDetails Socket connected:", socket.id);
-          // Emit user connection
-          socket.emit("userConnected", user._id);
-          // Also try authentication if token available
-          const token = localStorage.getItem("token");
-          if (token) {
-            socket.emit("authenticate", token);
-          }
+            console.log("OrderDetails Socket connected:", socket.id);
+            // Emit user connection
+            socket.emit("userConnected", user._id);
+            // Also try authentication if token available
+            const token = localStorage.getItem("token");
+            if (token) {
+                socket.emit("authenticate", token);
+            }
         });
 
         // Listen for order updates
         socket.on("orderUpdated", (payload) => {
-          const updatedOrder = payload.order || payload;
-          const orderUserId = payload.userId || updatedOrder.acc_id?._id || updatedOrder.acc_id;
+            const updatedOrder = payload.order || payload;
+            const orderUserId = payload.userId || updatedOrder.acc_id?._id || updatedOrder.acc_id;
 
-          // Only update if this order belongs to the current user and matches the current orderId
-          if (orderUserId && orderUserId.toString() === user._id.toString() && updatedOrder._id === orderId) {
-            console.log("📦 Order updated via Socket.IO in OrderDetails:", updatedOrder._id);
+            // Only update if this order belongs to the current user and matches the current orderId
+            if (orderUserId && orderUserId.toString() === user._id.toString() && updatedOrder._id === orderId) {
+                console.log("📦 Order updated via Socket.IO in OrderDetails:", updatedOrder._id);
 
-            // Update the order state while preserving populated orderDetails structure
-            setOrder((prevOrder) => {
-              if (!prevOrder) return updatedOrder;
+                // Update the order state while preserving populated orderDetails structure
+                setOrder((prevOrder) => {
+                    if (!prevOrder) return updatedOrder;
 
-              // Check if updated order has properly populated orderDetails
-              const hasPopulatedDetails = updatedOrder.orderDetails?.some(
-                (detail) => detail?.variant_id?.productId?.productName
-              );
+                    // Check if updated order has properly populated orderDetails
+                    const hasPopulatedDetails = updatedOrder.orderDetails?.some(
+                        (detail) => detail?.variant_id?.productId?.productName
+                    );
 
-              // Preserve existing orderDetails if updated order doesn't have populated ones
-              const preservedOrderDetails = hasPopulatedDetails
-                ? updatedOrder.orderDetails
-                : prevOrder.orderDetails;
+                    // Preserve existing orderDetails if updated order doesn't have populated ones
+                    const preservedOrderDetails = hasPopulatedDetails
+                        ? updatedOrder.orderDetails
+                        : prevOrder.orderDetails;
 
-              return {
-                ...prevOrder,
-                ...updatedOrder,
-                // Preserve populated orderDetails structure
-                orderDetails: preservedOrderDetails || updatedOrder.orderDetails || prevOrder.orderDetails,
-              };
-            });
-          }
+                    return {
+                        ...prevOrder,
+                        ...updatedOrder,
+                        // Preserve populated orderDetails structure
+                        orderDetails: preservedOrderDetails || updatedOrder.orderDetails || prevOrder.orderDetails,
+                    };
+                });
+            }
         });
 
         // Cleanup on unmount
         return () => {
-          socket.off("connect");
-          socket.off("orderUpdated");
+            socket.off("connect");
+            socket.off("orderUpdated");
         };
     }, [user?._id, orderId]);
 
@@ -413,10 +437,10 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
             await Api.feedback.deleteFeedback(orderId, actualVariantId, token);
 
             showToast("Feedback deleted successfully", "success");
-            
+
             // Refresh order data to get updated feedback
             await fetchOrderDetails();
-            
+
             setShowEditFeedbackModal(false);
         } catch (err) {
             const errorMessage = err.response?.data?.message || err.message || "Failed to delete feedback";
@@ -660,9 +684,8 @@ const OrderDetailsModal = ({ orderId, onClose }) => {
                                         {timeLeft !== null && !isVNPayExpired && (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-sm text-gray-600">Time remaining:</span>
-                                                <span className={`text-lg font-mono font-bold ${
-                                                    timeLeft < 300 ? 'text-red-600' : timeLeft < 600 ? 'text-orange-600' : 'text-green-600'
-                                                }`}>
+                                                <span className={`text-lg font-mono font-bold ${timeLeft < 300 ? 'text-red-600' : timeLeft < 600 ? 'text-orange-600' : 'text-green-600'
+                                                    }`}>
                                                     {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                                                 </span>
                                             </div>
