@@ -66,8 +66,6 @@ const LiveStream = () => {
                         }
                     }
 
-                    console.log('📡 Streams found:', streams);
-
                     // Cache the result
                     apiCacheRef.current.liveNow = {
                         data: streams,
@@ -79,7 +77,6 @@ const LiveStream = () => {
                         showToast(`Successfully loaded ${streams.length} stream(s)`, 'success');
                     }
                 } else {
-                    console.log('📡 API Error:', response.data?.message || 'Unknown error');
                     if (forceRefresh) {
                         showToast(`API Error: ${response.data?.message || 'Unknown error'}`, 'error');
                     }
@@ -160,7 +157,6 @@ const LiveStream = () => {
                         const prevStr = JSON.stringify(prev.map(s => s._id).sort());
                         const newStr = JSON.stringify(newStreams.map(s => s._id).sort());
                         if (prevStr !== newStr) {
-                            console.log('📡 Streams changed, updating...');
                             return newStreams;
                         }
                         return prev;

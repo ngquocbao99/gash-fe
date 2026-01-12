@@ -71,17 +71,6 @@ const Register = () => {
     const password = formData.password.trim();
     const repeatPassword = formData.repeatPassword.trim();
 
-    console.log('🔍 Form validation:', {
-      username: username.length,
-      name: name.length,
-      email: email,
-      phone: phone,
-      address: address.length,
-      password: password.length,
-      repeatPassword: repeatPassword.length,
-      invalidFile
-    });
-
     // Check required fields
     if (!username) return 'Please fill in all required fields';
     if (!name) return 'Please fill in all required fields';
@@ -132,7 +121,6 @@ const Register = () => {
         // Skip image upload for now to debug register issue
         let imageUrl = '';
         if (selectedFile) {
-          console.log('⚠️ Skipping image upload for debugging');
           // const uploadResponse = await Api.upload.image(selectedFile);
           // imageUrl = uploadResponse.data?.url;
           // if (!imageUrl) {
@@ -149,7 +137,6 @@ const Register = () => {
           image: imageUrl,
         };
 
-        console.log('📝 Signup data being sent:', signupData);
         await signup(signupData);
         showToast('Register successfully', 'success', 2000);
         

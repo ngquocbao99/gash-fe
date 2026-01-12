@@ -50,16 +50,6 @@ const Feedback = () => {
               const hasRatingFlag = feedbackObj.has_rating === true;
               const isDeleted = feedbackObj.is_deleted === true;
 
-              console.log(`Processing feedback for order ${order._id}, detail ${index}:`, {
-                hasContent,
-                hasRating,
-                hasContentFlag,
-                hasRatingFlag,
-                isDeleted,
-                feedback: feedbackObj,
-                detail: detail
-              });
-
               // Include feedback ONLY if it has content OR rating (checking both direct values and flags)
               // Filter out feedbacks with no rating and no content
               // Include deleted feedbacks so they can be shown with deletion message (but only if they have rating or content)
@@ -228,10 +218,6 @@ const Feedback = () => {
         const response = await Api.order.getOrders(user._id, token);
         const data = response.data.data || [];
 
-        console.log("Full orders response:", response);
-        console.log("Orders data:", data);
-        console.log("Number of orders:", data.length);
-
         if (!Array.isArray(data)) {
           showToast("Invalid API response format", "error");
           setFeedbacks([]);
@@ -247,28 +233,16 @@ const Feedback = () => {
             order.orderDetails.forEach((detail, detailIndex) => {
               if (detail.feedback) {
                 totalFeedbacksFound++;
-                console.log(`Order ${orderIndex}, Detail ${detailIndex} has feedback:`, {
-                  orderId: order._id,
-                  detailId: detail._id,
-                  feedback: detail.feedback,
-                  variant_id: detail.variant_id,
-                  variant: detail.variant
-                });
               }
             });
           }
         });
-        console.log(`Total feedbacks found in orders: ${totalFeedbacksFound}`);
 
         // Extract feedbacks from all orders
         const feedbackList = extractFeedbacksFromOrders(data);
-        console.log("Extracted feedback list:", feedbackList);
-        console.log("Number of feedbacks extracted:", feedbackList.length);
         
         // Extract eligible items (delivered orders without feedback)
         const eligibleList = extractEligibleItems(data);
-        console.log("Extracted eligible items:", eligibleList);
-        console.log("Number of eligible items:", eligibleList.length);
         
         setFeedbacks(feedbackList);
         setFilteredFeedbacks(feedbackList);

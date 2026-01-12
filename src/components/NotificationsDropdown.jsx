@@ -114,7 +114,6 @@ export default function NotificationsDropdown({ user }) {
     const baseURL =
       import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000";
 
-    console.log("🔌 Connecting notification socket to:", baseURL);
 
     // Create socket if it doesn't exist
     if (!socketRef.current) {
@@ -131,21 +130,17 @@ export default function NotificationsDropdown({ user }) {
 
     // Khi user kết nối, gửi userId lên server
     const handleConnect = () => {
-      console.log("Notification Socket connected:", socket.id);
       // Emit user connection to join notification room
       socket.emit("userConnected", user._id);
-      console.log(`🔔 Emitted userConnected for user: ${user._id}`);
     };
 
     // Nhận thông báo realtime
     const handleNewNotification = (data) => {
-      console.log("🔔 Nhận thông báo realtime:", data);
       // Add notification to the top of the list
       setNotifications((prev) => {
         // Check if notification already exists to avoid duplicates
         const exists = prev.some(n => n._id === data._id || (n._id?.toString() === data._id?.toString()));
         if (exists) {
-          console.log("⚠️ Notification already exists, skipping:", data._id);
           return prev;
         }
         return [data, ...prev];
@@ -175,7 +170,6 @@ export default function NotificationsDropdown({ user }) {
               orderId: orderInfo?._id || orderIdSuffix,
               orderInfo,
             });
-            console.log(`📧 Email sent for notification ${notificationId}`);
           } catch (err) {
             // On error, remove from set so we can retry if notification comes again
             emailedNotificationsSet.delete(notificationId);
@@ -183,14 +177,11 @@ export default function NotificationsDropdown({ user }) {
             console.error('Failed to send order notification email:', err);
           }
         })();
-      } else if (hasSentEmail) {
-        console.log(`⚠️ Email already sent for notification ${notificationId} (by another instance), skipping duplicate`);
       }
     };
 
     // Listen for badge updates to refresh notification list
     const handleBadgeUpdate = (data) => {
-      console.log("🔔 Notification badge update received:", data);
       // Refresh notifications list when badge updates
       const fetchNotifications = async () => {
         try {
@@ -209,7 +200,6 @@ export default function NotificationsDropdown({ user }) {
 
     // Listen for deleted notifications to remove them immediately
     const handleNotificationDeleted = (data) => {
-      console.log("🗑️ Notification deleted event received:", data);
       const { notificationId, userId } = data;
       
       if (!notificationId) {
@@ -219,7 +209,6 @@ export default function NotificationsDropdown({ user }) {
       
       // If userId is provided and doesn't match current user, ignore (for global notifications this might be null)
       if (userId && user?._id && userId.toString() !== user._id.toString()) {
-        console.log(`⚠️ Deletion event for different user (${userId} vs ${user._id}), ignoring`);
         return;
       }
       
@@ -229,15 +218,10 @@ export default function NotificationsDropdown({ user }) {
           const nId = n._id?.toString() || n._id;
           const deletedId = notificationId?.toString() || notificationId;
           const shouldKeep = nId !== deletedId;
-          if (!shouldKeep) {
-            console.log("🗑️ Removing notification from list:", { nId, deletedId });
-          }
           return shouldKeep;
         });
         
-        if (filtered.length !== prev.length) {
-          console.log(`Notification removed from list. Count: ${prev.length} → ${filtered.length}`);
-        } else {
+        if (filtered.length === prev.length) {
           console.warn(`⚠️ Notification with ID ${notificationId} not found in current list, refreshing...`);
           // Fallback: refresh the list if notification not found (might be a race condition)
           setTimeout(() => {
@@ -292,12 +276,10 @@ export default function NotificationsDropdown({ user }) {
     // If already connected, emit userConnected immediately
     if (socket.connected) {
       socket.emit("userConnected", user._id);
-      console.log(`🔔 Emitted userConnected immediately for user: ${user._id}`);
     }
 
     // Re-join rooms on reconnect
     const handleReconnect = () => {
-      console.log("🔄 Socket reconnected, rejoining notification rooms");
       socket.emit("userConnected", user._id);
     };
     socket.on("reconnect", handleReconnect);

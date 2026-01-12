@@ -39,7 +39,6 @@ export default function UserChat({ userId }) {
     socket.current = io(SOCKET_URL, { transports: ["websocket"] });
 
     socket.current.on("connect", () => {
-      console.log("User connected:", userId);
       socket.current.emit("start_chat", { userId, messageText: "" });
     });
 

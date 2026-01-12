@@ -158,7 +158,6 @@ const LiveStreamDetail = () => {
             const newRoom = new Room(roomOptions);
 
             newRoom.on(RoomEvent.Connected, () => {
-                console.log('Connected to LiveKit room');
                 setConnectionState('connected');
 
                 // Initialize remote participants list (exclude local participant)
@@ -220,12 +219,6 @@ const LiveStreamDetail = () => {
                         // IMPORTANT: Always set subscribed to true, even if already subscribed, to ensure this user's subscription is maintained
                         // This is critical to prevent subscription from being dropped when other users join
                         publication.setSubscribed(true);
-
-                                console.log('Audio track attached on connect', {
-                                    trackId: publication.track.id,
-                                    enabled: publication.track.enabled,
-                                    muted: videoRef.current?.muted
-                                });
                             }
                         }
                         // If track is not available yet, TrackSubscribed event will handle it
@@ -316,7 +309,6 @@ const LiveStreamDetail = () => {
             });
 
             newRoom.on(RoomEvent.Disconnected, async (reason) => {
-                console.log('Disconnected from LiveKit:', reason);
                 setConnectionState('disconnected');
                 setRoom(null);
 
@@ -342,7 +334,6 @@ const LiveStreamDetail = () => {
                         if (token) {
                             await Api.livestream.leave({ livestreamId: selectedStream._id }, token);
                             hasJoinedRef.current = false;
-                            console.log('Left livestream via API');
                         }
                     } catch (error) {
                         console.error('Error leaving livestream:', error);
@@ -393,7 +384,6 @@ const LiveStreamDetail = () => {
                             if (videoRef.current) {
                                 videoRef.current.muted = false;
                                 videoRef.current.play().then(() => {
-                                    console.log('✅ Livestream connected and playing successfully');
                                 }).catch(err => {
                                     if (err.name !== 'AbortError') {
                                         console.error('Video play failed:', err);

@@ -50,7 +50,6 @@ const Contact = () => {
 
       setError("");
       alert("Message sent successfully");
-      console.log("Form submitted:", formData);
 
       setFormData({ name: "", email: "", phone: "", message: "" });
     },

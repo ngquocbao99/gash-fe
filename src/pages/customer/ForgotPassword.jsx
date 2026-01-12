@@ -12,7 +12,6 @@ if (!publicKey) {
   console.error('EmailJS Public Key is missing. Please check .env file.');
 } else {
   emailjs.init(publicKey);
-  console.log('EmailJS initialized with Public Key:', publicKey);
 }
 
 const ForgotPassword = () => {
@@ -69,7 +68,6 @@ const ForgotPassword = () => {
           import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
           templateParams
         );
-        console.log('EmailJS Success:', emailjsResponse);
         showToast('OTP sent successfully', 'success', 3000);
 
         navigate('/otp-verification', {
@@ -102,7 +100,7 @@ const ForgotPassword = () => {
         <h1 className="text-xl sm:text-2xl md:text-2xl font-semibold mb-4 sm:mb-5 md:mb-6 text-center text-gray-900">
           Reset Your Password
         </h1>
-        
+
         <p className="text-sm text-gray-600 mb-4 sm:mb-5 text-center">
           Enter your email address to receive a password reset OTP.
         </p>
@@ -146,8 +144,8 @@ const ForgotPassword = () => {
 
         <p className="text-center text-sm text-gray-600 mt-4 sm:mt-5">
           Remember your password?{' '}
-          <Link 
-            to="/login" 
+          <Link
+            to="/login"
             className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors focus:outline-none rounded"
           >
             Sign In

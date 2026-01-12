@@ -221,7 +221,6 @@ export async function sendOrderNotificationEmail({
     );
 
     if (response.status === 200) {
-      console.log('Order notification email sent successfully to', userEmail);
     } else {
       console.warn('⚠️ Unexpected EmailJS response status:', response.status);
     }

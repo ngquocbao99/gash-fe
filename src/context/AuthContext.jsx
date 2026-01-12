@@ -181,9 +181,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (formData) => {
     try {
-      console.log('Sending signup request to backend:', formData);
       const response = await axiosClient.post('/auth/register', { ...formData });
-      console.log('Backend response:', response.data);
 
       const { token, account } = response.data;
       const loginTime = Date.now().toString();

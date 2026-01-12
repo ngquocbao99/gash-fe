@@ -134,7 +134,6 @@ const Orders = () => {
 
     // Connect and authenticate
     socket.on("connect", () => {
-      console.log("Orders Socket connected:", socket.id);
       // Emit user connection
       socket.emit("userConnected", user._id);
       // Also try authentication if token available
@@ -151,8 +150,6 @@ const Orders = () => {
 
       // Only update if this order belongs to the current user
       if (orderUserId && orderUserId.toString() === user._id.toString()) {
-        console.log("📦 Order updated via Socket.IO:", updatedOrder._id);
-        
         setOrders((prevOrders) => {
           const existingIndex = prevOrders.findIndex((o) => o._id === updatedOrder._id);
           

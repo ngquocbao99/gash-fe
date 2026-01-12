@@ -5,16 +5,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     ? "http://localhost:5000"
     : "https://gash-be.onrender.com");
 
-// Debug once at runtime to verify which URL is used in each env
-if (typeof window !== "undefined") {
-  // Only log once per load
-  (window.__GASH_API_LOGGED__ ||= false);
-  if (!window.__GASH_API_LOGGED__) {
-    window.__GASH_API_LOGGED__ = true;
-    // Intentionally concise log for production diagnosis
-    console.info("[GASH] API_BASE_URL:", API_BASE_URL, "host:", window.location.hostname);
-  }
-}
 
 // Export SOCKET_URL for use in other files
 export const SOCKET_URL = API_BASE_URL;
