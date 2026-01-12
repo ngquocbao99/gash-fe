@@ -9,7 +9,11 @@ import ProductButton from '../components/ProductButton';
 if (!import.meta.env.VITE_EMAILJS_PUBLIC_KEY) {
   console.error("EmailJS Public Key is missing. Please check .env file.");
 } else {
+  // Temporarily override console.info to suppress EmailJS initialization log
+  const originalConsoleInfo = console.info;
+  console.info = () => { }; // Suppress EmailJS initialization log
   emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+  console.info = originalConsoleInfo; // Restore original console.info
 }
 
 
@@ -132,7 +136,7 @@ const OTPVerification = () => {
         <h1 className="text-xl sm:text-2xl md:text-2xl font-semibold mb-4 sm:mb-5 md:mb-6 text-center text-gray-900">
           Verify OTP
         </h1>
-        
+
         <p className="text-sm text-gray-600 mb-4 sm:mb-5 text-center">
           Enter the 6-digit OTP sent to {email} to{' '}
           {type === 'forgot-password' ? 'reset your password' : 'verify your email'}.

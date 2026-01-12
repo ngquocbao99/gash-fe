@@ -11,8 +11,6 @@ if (typeof window !== "undefined") {
   (window.__GASH_API_LOGGED__ ||= false);
   if (!window.__GASH_API_LOGGED__) {
     window.__GASH_API_LOGGED__ = true;
-    // Intentionally concise log for production diagnosis
-    console.info("[GASH] API_BASE_URL:", API_BASE_URL, "host:", window.location.hostname);
   }
 }
 

@@ -32,7 +32,11 @@ const orderTemplateId = import.meta.env.VITE_EMAILJS_ORDER_TEMPLATE_ID;
 
 // Initialize EmailJS if public key is available
 if (publicKey && publicKey !== 'your_emailjs_public_key_here') {
+  // Temporarily override console.info to suppress EmailJS initialization log
+  const originalConsoleInfo = console.info;
+  console.info = () => {}; // Suppress EmailJS initialization log
   emailjs.init(publicKey);
+  console.info = originalConsoleInfo; // Restore original console.info
 }
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {

@@ -11,7 +11,11 @@ const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 if (!publicKey) {
   console.error('EmailJS Public Key is missing. Please check .env file.');
 } else {
+  // Temporarily override console.info to suppress EmailJS initialization log
+  const originalConsoleInfo = console.info;
+  console.info = () => {}; // Suppress EmailJS initialization log
   emailjs.init(publicKey);
+  console.info = originalConsoleInfo; // Restore original console.info
 }
 
 const ForgotPassword = () => {

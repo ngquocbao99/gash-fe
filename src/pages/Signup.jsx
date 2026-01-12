@@ -13,7 +13,11 @@ const emailJsTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 if (!emailJsPublicKey) {
   console.error('EmailJS Public Key is missing. Please check .env file.');
 } else {
+  // Temporarily override console.info to suppress EmailJS initialization log
+  const originalConsoleInfo = console.info;
+  console.info = () => {}; // Suppress EmailJS initialization log
   emailjs.init(emailJsPublicKey);
+  console.info = originalConsoleInfo; // Restore original console.info
 }
 
 const Signup = () => {
